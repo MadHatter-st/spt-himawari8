@@ -1,4 +1,82 @@
-﻿Add-Type @"
+﻿#Ссылка на json - файл, из которого получаем время последней съемки
+$latestInfoUri = "https://ncthmwrwbtst.cr.chiba-u.ac.jp/img/D531106/latest.json? + (New-Guid).ToString()";
+$latestInfo = Invoke-RestMethod -Uri $latestInfoUri
+
+$current = Get-Date $latestInfo.date;
+$time = $current.ToString("HHmmss")
+$year = $current.ToString("yyyy")
+$month = $current.ToString("MM")
+$day = $current.ToString("dd")
+Write-Output "$latestInfo.date"
+$width = 550
+$resolution = "4d" 
+$parts = 4
+
+#Создание папки для изображения, если такой нет
+$outpath = [Environment]::GetFolderPath("MyPictures") + "\Himawari\"
+if(!(Test-Path -Path $outpath ))
+{
+    [void](New-Item -ItemType directory -Path $outpath)
+}
+
+$outfile = "Earth.jpg" 
+
+#Ссылка на изображение Земли
+#$url = "https://jh170034-2.kudpc.kyoto-u.ac.jp/img/D531106/thumbnail/$width/$year/$month/$day/$time"
+$url = "https://jh170034-2.kudpc.kyoto-u.ac.jp/img/D531106/$resolution/$width/$year/$month/$day/$time"
+
+[void][reflection.assembly]::LoadWithPartialName("System.Windows.Forms")
+
+#Формирование места для изображения
+$image = New-Object System.Drawing.Bitmap(($width * $parts), ($width * $parts))
+$graphics = [System.Drawing.Graphics]::FromImage($image)
+$graphics.Clear([System.Drawing.Color]::Black)
+
+#Скачивание изображения  
+for ($y = 0; $y -lt $parts; $y++)
+{
+for ($x = 0; $x -lt $parts; $x++)
+{
+    $thisurl = $url + "_" + [String]$x + "_" + [String]$y + ".png"
+    Write-Output "Downloading: $thisurl"
+    
+    try
+    {
+    
+        $request = [System.Net.WebRequest]::create($thisurl)
+        $response = $request.getResponse()
+        $HTTP_Status = [int]$response.StatusCode
+        If ($HTTP_Status -eq 200)
+        { 
+            $imgblock = [System.Drawing.Image]::fromStream($response.getResponseStream())
+            $graphics.DrawImage($imgblock,($x*$width),($y*$width) , $width, $width)   
+            $imgblock.dispose()
+            $response.Close()
+        }
+    }
+    Catch
+    {
+        $ErrorMessage = $_.Exception.Message
+        $FailedItem = $_.Exception.ItemName
+        Write-Output "Failed! $ErrorMessage with $FailedItem"
+    }
+}
+}
+
+
+$qualityEncoder = [System.Drawing.Imaging.Encoder]::Quality
+$encoderParams = New-Object System.Drawing.Imaging.EncoderParameters(1)
+
+# Set JPEG quality level here: 0 - 100 (inclusive bounds)
+$encoderParams.Param[0] = New-Object System.Drawing.Imaging.EncoderParameter($qualityEncoder, 90)
+$jpegCodecInfo = [System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() | where {$_.MimeType -eq 'image/jpeg'}
+
+$image.save(($outpath + $outfile), $jpegCodecInfo, $encoderParams)
+$image.Dispose()
+
+Write-Output "Setting Wallpaper..."
+
+Add-Type @"
 using System;
 using System.Runtime.InteropServices;
 using Microsoft.Win32;
@@ -40,4 +118,4 @@ namespace Wallpaper
 }
 "@
 
-[Wallpaper.Setter]::SetWallpaper( 'C:\Users\User\Desktop\Earth.jpg', 1 )
+[Wallpaper.Setter]::SetWallpaper( 'C:\Users\User\Pictures\Himawari\Earth.jpg', 1 )
