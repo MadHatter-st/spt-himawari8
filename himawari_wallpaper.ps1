@@ -9,8 +9,11 @@ $month = $current.ToString("MM")
 $day = $current.ToString("dd")
 Write-Output "$latestInfo.date"
 $width = 550
+
+$parts = Read-Host "Please enter dimentions(1/2/4/8/16)"
+$resolution = [String]$parts + "d"
 $resolution = "4d" 
-$parts = 4
+
 
 #Создание папки для изображения, если такой нет
 $outpath = [Environment]::GetFolderPath("MyPictures") + "\Himawari\"
