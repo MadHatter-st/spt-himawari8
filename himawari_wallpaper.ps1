@@ -10,7 +10,8 @@ $day = $current.ToString("dd")
 Write-Output "$latestInfo.date"
 $width = 550
 
-$parts = Read-Host "Please enter dimentions(1/2/4/8/16)"
+#$parts = Read-Host "Please enter dimentions(1/2/4/8/16)"
+$parts = 4
 $resolution = [String]$parts + "d"
 $resolution = "4d" 
 
@@ -67,16 +68,6 @@ for ($x = 0; $x -lt $parts; $x++)
 }
 
 
-$qualityEncoder = [System.Drawing.Imaging.Encoder]::Quality
-$encoderParams = New-Object System.Drawing.Imaging.EncoderParameters(1)
-
-# Set JPEG quality level here: 0 - 100 (inclusive bounds)
-$encoderParams.Param[0] = New-Object System.Drawing.Imaging.EncoderParameter($qualityEncoder, 90)
-$jpegCodecInfo = [System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() | where {$_.MimeType -eq 'image/jpeg'}
-
-$image.save(($outpath + $outfile), $jpegCodecInfo, $encoderParams)
-$image.Dispose()
-
 Write-Output "Setting Wallpaper..."
 
 Add-Type @"
@@ -120,5 +111,7 @@ namespace Wallpaper
    }
 }
 "@
+
+#$parts = Read-Host "Please enter mode
 
 [Wallpaper.Setter]::SetWallpaper( 'C:\Users\User\Pictures\Himawari\Earth.jpg', 1 )
